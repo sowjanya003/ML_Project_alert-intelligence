@@ -1,0 +1,95 @@
+ ###ONLINE PAYMENT FRAUD DETECTION USING CNN
+
+                    ###IMPORTING PACKAGES
+import pandas as pd
+                     # READING .CSV FILE
+
+data=pd.read_csv(r"C:\Users\Bhavana Sri Sowjanya\Downloads\DATASET_01.csv")
+        
+                    ### DATA VISUALIZATION
+    
+data.shape #no.of rows and columns
+data.size #total no.of elemnts
+data.head() #first 5 rows and columns
+data.tail()#last 5 rows and columns
+data.info() #columns datatype-non-null means no empty space
+data.describe() #basic data of dataset for numerial columns  #works only when column consists of numbers
+data.columns # COLUMN NAMES
+data.dtypes      # TYPE OF DATA PRESENT IN EACH COLUMN
+data.isna().sum()
+data.index
+                    ### DATA PRE_PROCESSING
+                  
+data.drop(['nameOrig'],axis=1,inplace=True)
+data.drop(['nameDest'],axis=1,inplace=True)
+data.drop(['isFlaggedFraud'],axis=1,inplace=True)
+data.dtypes
+data['type'].value_counts()
+data["type"] = data["type"].map({"CASH_OUT": 1, "PAYMENT": 2, "CASH_IN": 3, "TRANSFER": 4, "DEBIT": 5})
+data['type'].value_counts()
+data['isFraud'].value_counts()
+
+                   ###  MODEL BUILDING        
+
+x=data.iloc[:,:-1].values
+y=data.iloc[:,-1].values
+
+##splitting data for training and testing purpose
+                    
+from sklearn.model_selection import train_test_split
+xtrain,xtest,ytrain,ytest=train_test_split(x,y,test_size=0.2,random_state=9) #test_size denotes 20% of data splitted for testing and remaining for training
+
+## reshaping the data for convolution
+
+xtrain=xtrain.reshape(xtrain.shape[0],xtrain.shape[1],1)
+xtest=xtest.reshape(xtest.shape[0],xtest.shape[1],1)
+xtrain.shape,xtest.shape
+
+## CNN Algorithm
+
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Flatten, Dense
+
+model = Sequential()
+model.add(Dense(xtrain.shape[1],activation='relu',input_dim= xtrain.shape[1]))
+model.add(Dense(128,activation='relu'))
+model.add(Dense(1,activation='sigmoid'))
+
+ ###MODEL EVALUATION
+
+model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+model.fit(xtrain,ytrain,batch_size=5,epochs=1)  ##ACCURARCY: 0.99
+ypred = model.predict(xtest)
+
+##DETECTING FRAUD TRANSACTION
+                        
+if (model.predict([[1,2,2346.00,5688898688.00,4035679.00,46000.00,324.00]])):
+    print("Fraud")
+else:
+    print("NOT a FRAUD")
+
+##IMPLEMENTING WITH KNN AND SVM ALGORITHMS 
+    
+##importing kNN algorithm named KNeighborsClassifier from neighbors module
+from sklearn.neighbors import KNeighborsClassifier
+model=KNeighborsClassifier(n_neighbors=1)
+
+###SVM algorithm
+from sklearn.svm import SVC
+smodel=SVC(kernel='linear')
+
+model.fit(xtrain,ytrain)
+ypred=model.predict(xtest)
+
+
+
+#comparing prediction values given by algorithm and testing values and checking for accuracy
+from sklearn.metrics import accuracy_score
+print(accuracy_score(ytest,ypred)*100) 
+
+## giving input and checking output
+print(model.predict([[1,2,2346.00,56650,40359.00,46000.00,324.00]]))
+
+
